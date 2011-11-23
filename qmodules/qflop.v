@@ -1,44 +1,51 @@
-module q_output(rl_l, rh_l, clock, resolver_clock, ack, out);
-    input rh_l, rl_l, clock;
-    output ack, out, resolver_clock;
-    wire pre_out1, pre_out2, pre_out3, post_out, pre_rc1, pre_rc2;
+module q_flop(data, clock, ack, out);
+    input data, clock;
+    output ack, out;
+    wire p, rl_l, rh_l;
+
+    q_out o(.l(rl_l), .h(rh_l), .c(clock), .p(p), .a(ack), .q(out));
+    q_resolver i(.data(data), .clock(p), .rh_l(rh_l), .rl_l(rl_l));
+
+endmodule   // q_flop
+
+module q_out(l, h, c, p, a, q);
+    input l, h, c;
+    output a, q, p;
+    wire pre_q1, pre_q2, pre_q3, post_q, pre_p1, pre_p2;
 
     and
-    #1  (ack, rl_l, rh_l),
-        (pre_out1, ~rh_l, clock),
-        (pre_out2, ~clock, out),
-        (pre_out3, rl_l, out),
-        (pre_rc1, out, rl_l, clock),
-        (pre_rc2, ~out, rh_l, clock);
+    #1  (a, l, h),
+        (pre_q1, ~h, c),
+        (pre_q2, ~c, q),
+        (pre_q3, l, q),
+        (pre_p1, q, l, c),
+        (pre_p2, ~q, h, c);
     or
-    #1  (post_out, pre_out1, pre_out2, pre_out3),
-        (resolver_clock, pre_rc1, pre_rc2);
+    #1  (post_q, pre_q1, pre_q2, pre_q3),
+        (p, pre_p1, pre_p2);
     buf
-        (out, post_out);
+        (q, post_q);
 
 endmodule   // q_output
-
 
 module q_resolver(data, clock, rh_l, rl_l);
     input data, clock;
     output rh_l, rl_l;
-    wire q4a, q4b, qc, b, a, qc_a_strong, qc_b_strong, pre_rh_l, pre_rl_l;
-    reg gnd = 0;
+    wire q4a, q4b, qc, b, a, qc_a_strong, qc_b_strong;
+    supply0 gnd;
 
-    greater_than cmp_rh_l(.a(a), .b(b), .q(pre_rh_l));
-    greater_than cmp_rl_l(.a(b), .b(a), .q(pre_rl_l));
+    greater_than cmp_rh_l(.a(a), .b(b), .q(rh_l));
+    greater_than cmp_rl_l(.a(b), .b(a), .q(rl_l));
 
     not
-    #1  (q4b, data),
+        (q4b, data),
         (b, qc_b_strong),
-        (a, qc_a_strong),
-        (rl_l, pre_rl_l),
-        (rh_l, pre_rh_l);
+        (a, qc_a_strong);
     rpmos
-    #1  (b, gnd, q4a),
+        (b, gnd, q4a),
         (a, gnd, q4b);
     tranif1
-    #1  (qc_b_strong, qc_a_strong, qc);
+        (qc_b_strong, qc_a_strong, qc);
     buf
         (qc_b_strong, a),
         (qc_a_strong, b),
@@ -46,7 +53,6 @@ module q_resolver(data, clock, rh_l, rl_l);
         (qc, clock);
 
 endmodule   // q_resolver
-
 
 module greater_than(a, b, q);
     input a, b;
@@ -59,9 +65,9 @@ module greater_than(a, b, q);
     always
     #1  begin
             if (a > b)
-                assign pre_q = 1;
-            else
                 assign pre_q = 0;
+            else
+                assign pre_q = 1;
         end
 
 endmodule   //greater_than
