@@ -1,11 +1,10 @@
-module q_flop(rst, data, ack, out);
-    input rst, data;
+module q_flop(rst, clk, data, ack, out);
+    input clk, rst, data;
     output ack, out;
-    wire clk, res_clk, rl_l, rh_l;
+    wire res_clk, rl_l, rh_l;
 
     q_out qo(.rst(rst), .rl_l(rl_l), .rh_l(rh_l), .clk(clk), .ack(ack), .out(out), .res_clk(res_clk));
     q_resolver qi(.data(data), .clk(res_clk), .rh_l(rh_l), .rl_l(rl_l));
-    q_clock qc(.rst(rst), .clk(clk), .ack(ack));
 
 endmodule   // q_flop
 
@@ -54,7 +53,7 @@ module q_clock(rst, ack, clk);
 
     not
     #1  (clk_net, ack);
-    or
-    #1  (clk, clk_net, rst);
+    and 
+    #1  (clk, clk_net, ~rst);
 
 endmodule   // q_clock
