@@ -1,20 +1,21 @@
 module testqflop;
-    reg data, clock;
+    reg data, rst;
     wire ack, out;
     reg expected;
 
-    q_flop myflop (.data(data), .clock(clock), .ack(ack), .out(out));
+    q_flop myflop(.rst(rst), .data(data), .ack(ack), .out(out));
 
     initial
         begin
-            #0      data=1; clock=1; expected=0;
-            #10     data=1; clock=0; expected=0;
-            #10     data=1; clock=1; expected=0;
-            #10     data=1; clock=0; expected=0;
+            #0      rst=1; data=1; expected=1;
+            #10     rst=0; data=1; expected=1;
+            #10     rst=0; data=0; expected=0;
+            #10     rst=0; data=1; expected=1;
+            #10     rst=0; data=0; expected=0;
         end
     initial
         $monitor(
-            "data=%b clock=%b ack=%b out=%b, expected out=%b time=%d",
-            data, clock, ack, out, expected, $time);
+            "[%d] data=%b rst=%b ack=%b out=%b, expected out=%b",
+            $time, data, rst, ack, out, expected);
 
 endmodule // testqflop

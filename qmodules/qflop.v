@@ -1,73 +1,60 @@
-module q_flop(data, clock, ack, out);
-    input data, clock;
+module q_flop(rst, data, ack, out);
+    input rst, data;
     output ack, out;
-    wire p, rl_l, rh_l;
+    wire clk, res_clk, rl_l, rh_l;
 
-    q_out o(.l(rl_l), .h(rh_l), .c(clock), .p(p), .a(ack), .q(out));
-    q_resolver i(.data(data), .clock(p), .rh_l(rh_l), .rl_l(rl_l));
+    q_out qo(.rst(rst), .rl_l(rl_l), .rh_l(rh_l), .clk(clk), .ack(ack), .out(out), .res_clk(res_clk));
+    q_resolver qi(.data(data), .clk(res_clk), .rh_l(rh_l), .rl_l(rl_l));
+    q_clock qc(.rst(rst), .clk(clk), .ack(ack));
 
 endmodule   // q_flop
 
-module q_out(l, h, c, p, a, q);
-    input l, h, c;
-    output a, q, p;
-    wire pre_q1, pre_q2, pre_q3, post_q, pre_p1, pre_p2;
+module q_out(rst, rl_l, rh_l, clk, ack, out, res_clk);
+    input rst, rl_l, rh_l, clk;
+    output ack, out, res_clk;
+    wire out1, out2, out3, out_net, res_clk1, res_clk2;
 
     and
-    #1  (a, l, h),
-        (pre_q1, ~h, c),
-        (pre_q2, ~c, q),
-        (pre_q3, l, q),
-        (pre_p1, q, l, c),
-        (pre_p2, ~q, h, c);
+    #1  (ack, rl_l, rh_l),
+        (out1, ~rh_l, clk),
+        (out2, ~clk, out_net),
+        (out3, rl_l, out_net),
+        (res_clk1, out_net, rl_l, clk),
+        (res_clk2, ~out_net, rh_l, clk);
     or
-    #1  (post_q, pre_q1, pre_q2, pre_q3),
-        (p, pre_p1, pre_p2);
+    #1  (out_net, rst, out1, out2, out3),
+        (res_clk, rst, res_clk1, res_clk2);
     buf
-        (q, post_q);
+        (out, out_net);
 
 endmodule   // q_output
 
-module q_resolver(data, clock, rh_l, rl_l);
-    input data, clock;
+module q_resolver(data, clk, rh_l, rl_l);
+    input data, clk;
     output rh_l, rl_l;
-    wire q4a, q4b, qc, b, a, qc_a_strong, qc_b_strong;
-    supply0 gnd;
-
-    greater_than cmp_rh_l(.a(a), .b(b), .q(rh_l));
-    greater_than cmp_rl_l(.a(b), .b(a), .q(rl_l));
+    wire data_bar, a_net, b_net, or_1, or_2;
 
     not
-        (q4b, data),
-        (b, qc_b_strong),
-        (a, qc_a_strong);
-    rpmos
-        (b, gnd, q4a),
-        (a, gnd, q4b);
-    tranif1
-        (qc_b_strong, qc_a_strong, qc);
-    buf
-        (qc_b_strong, a),
-        (qc_a_strong, b),
-        (q4a, data),
-        (qc, clock);
+    #1  (data_bar, data);
+    nor
+    #1  (or_1, data, a_net),
+        (a_net, or_1, clk, b_net),
+        (b_net, or_2, clk, a_net),
+        (or_2, data_bar, b_net);
+    nand
+    #1  (rh_l, a_net, ~b_net),
+        (rl_l, b_net, ~a_net);
 
 endmodule   // q_resolver
 
-module greater_than(a, b, q);
-    input a, b;
-    output q;
-    reg pre_q;
+module q_clock(rst, ack, clk);
+    input rst, ack;
+    output clk;
+    wire clk_net;
 
-    buf 
-        (q, pre_q);
+    not
+    #1  (clk_net, ack);
+    or
+    #1  (clk, clk_net, rst);
 
-    always
-    #1  begin
-            if (a > b)
-                assign pre_q = 0;
-            else
-                assign pre_q = 1;
-        end
-
-endmodule   //greater_than
+endmodule   // q_clock
