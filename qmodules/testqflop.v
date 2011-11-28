@@ -8,11 +8,13 @@ module testqflop;
 
     initial
         begin
+            $dumpfile("testqflop.vcd");
+            $dumpvars(0,testqflop);
             #0      rst=1; data=1; expected=1;
-            #100    rst=0; data=1; expected=1;
-            #100    rst=0; data=0; expected=0;
-            #100    rst=0; data=1; expected=1;
-            #100    rst=0; data=0; expected=0;
+            #10     rst=0; data=1; expected=1;
+            #10     rst=0; data=0; expected=0;
+            #10     rst=0; data=1; expected=1;
+            #10     rst=0; data=0; expected=0;
         end
     initial
         $monitor(

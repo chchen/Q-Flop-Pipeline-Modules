@@ -14,17 +14,17 @@ module q_out(rst, rl_l, rh_l, clk, ack, out, res_clk);
     wire out1, out2, out3, out_net, res_clk1, res_clk2;
 
     and
-    #1  (ack, rl_l, rh_l),
+        (ack, rl_l, rh_l),
         (out1, ~rh_l, clk),
         (out2, ~clk, out_net),
         (out3, rl_l, out_net),
         (res_clk1, out_net, rl_l, clk),
         (res_clk2, ~out_net, rh_l, clk);
     or
-    #1  (out_net, rst, out1, out2, out3),
+        (out_net, rst, out1, out2, out3),
         (res_clk, rst, res_clk1, res_clk2);
     buf
-        (out, out_net);
+    #1  (out, out_net);
 
 endmodule   // q_output
 
@@ -34,9 +34,9 @@ module q_resolver(data, clk, rh_l, rl_l);
     wire data_bar, a_net, b_net, or_1, or_2;
 
     not
-    #1  (data_bar, data);
+        (data_bar, data);
     nor
-    #1  (or_1, data, a_net),
+        (or_1, data, a_net),
         (a_net, or_1, clk, b_net),
         (b_net, or_2, clk, a_net),
         (or_2, data_bar, b_net);
@@ -46,14 +46,12 @@ module q_resolver(data, clk, rh_l, rl_l);
 
 endmodule   // q_resolver
 
-module q_clock(rst, ack, clk);
-    input rst, ack;
+module q_clock(ack, clk);
+    input ack;
     output clk;
     wire clk_net;
 
     not
-    #1  (clk_net, ack);
-    and 
-    #1  (clk, clk_net, ~rst);
+    #4  (clk, ack);
 
 endmodule   // q_clock
