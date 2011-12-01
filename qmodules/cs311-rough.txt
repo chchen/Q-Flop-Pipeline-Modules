@@ -1,0 +1,84 @@
+Introduction
+
+This document describes state machine implementations, using Q-flops[1], of two asynchronous handshaking protocols. These protocols can be used for coordinating data transfer between pipeline stages in a processor. The state machines, implemented using binary logic gates, and the gates, implemented using transistors, are a form of deterministic finite automata. Q-flops are used for their delay-insensitive properties, lending themselves to a locally synchronous, but globally asynchronous design. That is, each pipeline stage has its own clock--there is no global timing requirement. The Q-flops and associated modules, such as clock and rendezvous circuits, are also DFAs, and will be described below. Two handshaking protocols will be discussed, both using two signal wires: one using 4 steps and one using 2 steps.
+
+Q-flop Diagram
+
+Q-flops 
+
+Our discussion of Q-flops will cover input resolution, output, clock, and rendezvous elements. Similar to a traditional edge-triggered flip-flop, the Q-flop consists of separate input and output elements, controlled by a clock. The distinction comes with the acknowledgement signal, which indicates when the Q-flop has resolved updating the input or output. The clock element waits for acknowledgement before continuing with the next cycle. For machines that require more than one Q-flop, a method of combining separate acknowledgement signals is required, and this is handled by the rendezvous element. The input resolution and acknowledgement means that the Q-flop input will eventually settle to a high or low state, avoiding the issue of metastability in traditional latches and flip-flops.
+
+Q-flop Input Resolution
+
+The Q-flop resolver only reads from the input when the clock signal goes low--otherwise, the input is locked. When the clock signal goes low, the resolver settles to one of two states, and upon settling, the acknowledgement line also goes low, letting the clock know to proceed. The circuit is designed in such a way that one transition is possible per input cycle.
+
+Q-flop Input State Diagram
+
+Q-flop Input Transition Table
+
+Q-flop Output
+
+Conversely from the resolver, the Q-flop output element only updates the output line when the clock signal goes high, and only raises the acknowledgment line when the output is updated. An interesting implemention detail is the handling of the clock signal for the resolver. The clock signal enters the Q-flop via the output element--the clock signal going to the resolver is actually a function of the output element's state.
+
+Q-flop Output State Diagram
+
+Q-flop Output Transition Table
+
+Q-flop Clock
+
+The Q-flop clock element controls the behavior of the Q-flops, initiating input and output states for the resolver and output elements. Upon toggling state, the clock waits for the acknowledgement to match before toggling again. If there is any combinational logic in the overall module, those delays must be accounted for by placing a lower bound on time between output and input events greater than the delays in the combinational logic.
+
+Q-flop Clock State Diagram
+
+Q-flop Clock Transition Table
+
+Q-flop Rendezvous
+
+For machines that contain more than one Q-flop, a method of combining the incoming acknowledgement signals is required. In this implementation, a Muller C-element[2] is used for this purpose. It is a circuit that
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Summary
+
+This project concerns 3 state machines for inter-stage handshake protocols. These protocols are used in asynchronous pipelined processors to control the handoff of data. I will implement them using delay-insensitive Q-Modules.
+
+Why Handshake Protocols?
+
+In a standard synchronous design, data transfer between pipeline stages only occurs at the rising or falling edges of a global clock signal. This insures that all stages hand off data at the same time, so instructions travel through the pipeline in lock-step fashion and no data is lost. Because a given pipeline stage may perform different functions, the complexity of logic functions within that stage may vary--in some cases it may be a no-op. Because all stages must complete computation between clock pulses, the machine needs to allow for the worst-case scenario, and cannot run faster.
+
+In an asynchronous design, there is no global clock, and each module is self-timed. This means that a given pipeline stage's completion time may vary. In order to allow neighboring stages to communicate their state, a handshake protocol is required to allow for the orderly transfer of data.
+
+Q-Modules, described by Rosenberger, Molnar, Chaney, and Feng (1988), are internally-clocked modules whose internal clock can be delayed. I will implement the state machines for 3 different handshake protocols, described below, using those modules.
+
+Two-wire, Four Step Handshake:
+
+In this protocol, two wires, WireA and WireB, are used to communicate state between a predecessor A, and a successor B. WireA and WireB are initially both low. When A is complete and wishes to transfer data, WireA is raised to high. When B has received said data, WireB is also raised to high. At this point, A lowers WireA, then B lowers WireB, and A can accept new data from its predecessor.
+
+Two-wire, Two Step Handshake:
+
+This protocol is similar to the four step handshake in layout, but only requires difference between WireA and WireB. While the wires are initialized to low, A merely toggles WireA to indicate that data is ready. Similarly, B merely toggles WireB to match WireA to indicate receipt.
+
+One-wire, Two Step Handshake (GasP):
+
+In this protocol, a single wire is shared for bidirectional communication. When A has data to send, the wire is raised. When B has received the data, the wire is lowered.
+
+Deliverables
+
+I will provide definitions for the three state machines, including state diagrams and transition tables. I will also provide the derived circuit definitions for verification.
