@@ -12,36 +12,47 @@ Q-flop Input Resolution
 
 The Q-flop resolver only reads from the input when the clock signal goes low--otherwise, the input is locked. When the clock signal goes low, the resolver settles to one of two states, and upon settling, the acknowledgement line also goes low, letting the clock know to proceed. The circuit is designed in such a way that one transition is possible per input cycle.
 
-Q-flop Input State Diagram
-
-Q-flop Input Transition Table
+state diagram/transition table
 
 Q-flop Output
 
 Conversely from the resolver, the Q-flop output element only updates the output line when the clock signal goes high, and only raises the acknowledgment line when the output is updated. An interesting implemention detail is the handling of the clock signal for the resolver. The clock signal enters the Q-flop via the output element--the clock signal going to the resolver is actually a function of the output element's state.
 
-Q-flop Output State Diagram
-
-Q-flop Output Transition Table
+state diagram/transition table
 
 Q-flop Clock
 
 The Q-flop clock element controls the behavior of the Q-flops, initiating input and output states for the resolver and output elements. Upon toggling state, the clock waits for the acknowledgement to match before toggling again. If there is any combinational logic in the overall module, those delays must be accounted for by placing a lower bound on time between output and input events greater than the delays in the combinational logic.
 
-Q-flop Clock State Diagram
-
-Q-flop Clock Transition Table
+state diagram/transition table
 
 Q-flop Rendezvous
 
-For machines that contain more than one Q-flop, a method of combining the incoming acknowledgement signals is required. In this implementation, a Muller C-element[2] is used for this purpose. It is a circuit that
+For machines that contain more than one Q-flop, a method of combining the incoming acknowledgement signals is required. In this implementation, a Muller C-element[2] is used for this purpose. The Muller C-element implements a state machine that reflects the input value when all inputs agree, and stays in the previous state otherwise.
 
+state diagram/transition table
 
+Pipeline Stage Diagram
 
+4-step Handshake Machine
 
+To implement a 4-step handshake machine, we define a state machine with five state variables and three outputs, the other two being inputs from external machines. These inputs reflect request and acknowledgement lines on the input and output sides, and a state variable which indicates whether the machine is full or not. In this machine, all variables are initialized to low. The first step in the handshake occurs when the request line on the input side goes high. This indicates that the predecessor stage has data available. If the machine is in the empty state, it can acknowledge receipt by raise the acknowledge line on the inputside to high. In addition, the full variable goes high and the request line to the successor goes high, indicating that we wish to pass the data along. At this point, the machine waits for the successor stage to acknowledge receipt, or for the predecessor stage to lower the input request line. If the successor raises the acknowledge line, the machine lowers the request line on the output side and sets the full variable to low. If the successor lowers the request line, the machine lowers the acknowledge line on the input side. The machine returns to the starting state when the successor lowers the input line in response to the lowering of the request line on the output side. This is the typical path, but alternate paths are possible and are accounted for in the transition diagram and state transition tables.
 
+state diagram/transition table
 
+2-step Handshake Machine
 
+The 2-step handshake machine shares the same state variables as the 4-state machine, and has the same starting state, but requests are asserted by toggling the request value, and acknowledgements are asserted by matching the value on the request line. An interesting property is the matching of the request line on the output side and the acknowledge line on the input side for all states. 
+
+state diagram/transition table
+
+Implementation
+
+The machines were implemented as verilog modules, one for the Q-flop elements, one each for the handshake machines, and one each for the testbench programs. The modules were compiled using Icarus Verilog and wave output verified using GTKWave. Source code and examples are available at https://github.com/chchen/Q-Flop-Pipeline-Modules
+
+Discussion
+
+Because this is a locally synchronous but globally asynchronous design, the clocks are always running and the modules are still refreshing even if no external inputs have changed--this could be seen as inefficient. In addition, the fact that the machines have independent clocks means that there is some latency when transferring data given the clock phase differences between adjacent machines. While there has been an attempt to find the minimum number of states for each machine, there is no guarantee that this is so. In addition, while attempts have been made to account for gate delays in the Verilog implementation, those delays are entirely fabricated and not based or even influenced by any empirical data. I look forward to designing and implementing more efficient and realistic machines in the near term. I had fun.
 
 
 
