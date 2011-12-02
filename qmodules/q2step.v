@@ -55,7 +55,7 @@ module muller_c_four(a, b, c, d, out);
 
     wire a_h, b_h, c_h;
     wire a_l, b_l, c_l;
-    wire out_net, out_bar;
+    wire out_net;
 
     pmos
     #1  (a_h, supply, a),
