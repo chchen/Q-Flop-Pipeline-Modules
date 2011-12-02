@@ -22,9 +22,9 @@ module test4step;
         (r_in5, r_out4),
         (a_out4, a_in5);
     buf
-    #10 (a_out5, r_out5);
+    #10 (a_out5, r_out5);   // Loopback acknowledge at the end
     not
-    #10 (r_in1, a_in1);
+    #10 (r_in1, a_in1);     // Always send data
 
     initial
         begin 
@@ -35,4 +35,4 @@ module test4step;
             #20     start=0; rst=0;
         end
 
-endmodule // testqstage
+endmodule // test4step

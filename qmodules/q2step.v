@@ -12,16 +12,20 @@ module q_2step(start, rst, r_in, a_out, a_in, r_out, f);
     wire r_in_in, a_out_in, a_and_r_in, f_in; 
 
     // Inputs
-    q_flop qf_r_in(.rst(start), .clk(clk), .data(r_in_in), .ack(ack_r_in), .out(r_in_net));
-    q_flop qf_a_out(.rst(start), .clk(clk), .data(a_out_in), .ack(ack_a_out), .out(a_out_net));
+    q_flop qf_r_in(.rst(start), .clk(clk), .data(r_in_in),
+        .ack(ack_r_in), .out(r_in_net));
+    q_flop qf_a_out(.rst(start), .clk(clk), .data(a_out_in),
+        .ack(ack_a_out), .out(a_out_net));
 
     // Outputs
-    q_flop qf_a_and_r(.rst(start), .clk(clk), .data(a_and_r_in), .ack(ack_a_and_r), .out(a_and_r));
+    q_flop qf_a_and_r(.rst(start), .clk(clk), .data(a_and_r_in),
+        .ack(ack_a_and_r), .out(a_and_r));
     q_flop qf_f(.rst(start), .clk(clk), .data(f_in), .ack(ack_f), .out(f));
 
     // Local Clock
     q_clock qc(.clk(clk), .ack(ack));
-    muller_c_four rendezvous(.a(ack_r_in), .b(ack_a_out), .c(ack_a_and_r), .d(ack_f), .out(ack));
+    muller_c_four rendezvous(.a(ack_r_in), .b(ack_a_out),
+        .c(ack_a_and_r), .d(ack_f), .out(ack));
 
     and
     #1  (a_and_r_net1, r_in_net, ~a_and_r, ~a_out_net),
@@ -72,4 +76,4 @@ module muller_c_four(a, b, c, d, out);
     not (weak0, weak1)
     #1  (out_net, out);
     
-endmodule   // muller_c_five
+endmodule   // muller_c_four

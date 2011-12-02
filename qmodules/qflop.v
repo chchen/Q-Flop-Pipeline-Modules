@@ -3,7 +3,8 @@ module q_flop(rst, clk, data, ack, out);
     output ack, out;
     wire res_clk, rl_l, rh_l;
 
-    q_out qo(.rst(rst), .rl_l(rl_l), .rh_l(rh_l), .clk(clk), .ack(ack), .out(out), .res_clk(res_clk));
+    q_out qo(.rst(rst), .rl_l(rl_l), .rh_l(rh_l), .clk(clk),
+        .ack(ack), .out(out), .res_clk(res_clk));
     q_resolver qi(.data(data), .clk(res_clk), .rh_l(rh_l), .rl_l(rl_l));
 
 endmodule   // q_flop
@@ -52,6 +53,6 @@ module q_clock(ack, clk);
     wire clk_net;
 
     not
-    #4  (clk, ack);
+    #4  (clk, ack); // Delay for combinational logic
 
 endmodule   // q_clock
