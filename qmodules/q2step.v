@@ -57,21 +57,19 @@ module muller_c_four(a, b, c, d, out);
     wire a_l, b_l, c_l;
     wire out_net, out_bar;
 
-    nmos
-        (a_h, supply, a),
+    pmos
+    #1  (a_h, supply, a),
         (b_h, a_h, b),
         (c_h, b_h, c),
         (out_net, c_h, d);
-    pmos
-        (a_l, gnd, a),
+    nmos
+    #1  (a_l, gnd, a),
         (b_l, a_l, b),
         (c_l, b_l, c),
         (out_net, c_l, d);
     not
-        (out_bar, out_net);
-    not (weak0, weak1)
-        (out_net, out_bar);
-    buf
     #1  (out, out_net);
+    not (weak0, weak1)
+    #1  (out_net, out);
     
 endmodule   // muller_c_five
